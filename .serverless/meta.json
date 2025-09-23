@@ -1,0 +1,1573 @@
+{
+  "C:\\Users\\KKT\\Desktop\\s3 services\\serverless.yml": {
+    "versionFramework": "4.19.1",
+    "servicePath": "C:\\Users\\KKT\\Desktop\\s3 services\\serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "s3-signed-urls",
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs18.x",
+        "region": "us-east-1",
+        "environment": {
+          "AWS_BUCKET_NAME": "s3-bucket-operations"
+        },
+        "iamRoleStatements": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:PutObject",
+              "s3:GetObject",
+              "s3:ListBucket"
+            ],
+            "Resource": [
+              "arn:aws:s3:::s3-bucket-operations",
+              "arn:aws:s3:::s3-bucket-operations/*"
+            ]
+          }
+        ],
+        "stage": "dev",
+        "versionFunctions": true,
+        "compiledCloudFormationTemplate": {
+          "AWSTemplateFormatVersion": "2010-09-09",
+          "Description": "The AWS CloudFormation template for this Serverless application",
+          "Resources": {
+            "GetSignedUrlUploadLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlUpload"
+              }
+            },
+            "GetSignedUrlGetLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlGet"
+              }
+            },
+            "IamRoleLambdaExecution": {
+              "Type": "AWS::IAM::Role",
+              "Properties": {
+                "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": [
+                          "lambda.amazonaws.com"
+                        ]
+                      },
+                      "Action": [
+                        "sts:AssumeRole"
+                      ]
+                    }
+                  ]
+                },
+                "Policies": [
+                  {
+                    "PolicyName": {
+                      "Fn::Join": [
+                        "-",
+                        [
+                          "s3-signed-urls",
+                          "dev",
+                          "lambda"
+                        ]
+                      ]
+                    },
+                    "PolicyDocument": {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:CreateLogStream",
+                            "logs:CreateLogGroup",
+                            "logs:TagResource"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:PutLogEvents"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "s3:PutObject",
+                            "s3:GetObject",
+                            "s3:ListBucket"
+                          ],
+                          "Resource": [
+                            "arn:aws:s3:::s3-bucket-operations",
+                            "arn:aws:s3:::s3-bucket-operations/*"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "Path": "/",
+                "RoleName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "s3-signed-urls",
+                      "dev",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "lambdaRole"
+                    ]
+                  ]
+                }
+              }
+            },
+            "GetSignedUrlUploadLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                  "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+                },
+                "Handler": "handler.getSignedUrlUpload",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "s3-signed-urls-dev-getSignedUrlUpload",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "AWS_BUCKET_NAME": "s3-bucket-operations"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "GetSignedUrlUploadLogGroup"
+              ]
+            },
+            "GetSignedUrlGetLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                  "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+                },
+                "Handler": "handler.getSignedUrlGet",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "s3-signed-urls-dev-getSignedUrlGet",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "AWS_BUCKET_NAME": "s3-bucket-operations"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "GetSignedUrlGetLogGroup"
+              ]
+            },
+            "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "GetSignedUrlUploadLambdaFunction"
+                },
+                "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+              }
+            },
+            "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "GetSignedUrlGetLambdaFunction"
+                },
+                "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+              }
+            },
+            "ApiGatewayRestApi": {
+              "Type": "AWS::ApiGateway::RestApi",
+              "Properties": {
+                "Name": "dev-s3-signed-urls",
+                "EndpointConfiguration": {
+                  "Types": [
+                    "EDGE"
+                  ]
+                },
+                "Policy": ""
+              }
+            },
+            "ApiGatewayResourceUploadDashurl": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "upload-url",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceGetDashurl": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "get-url",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayMethodUploadDashurlPost": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "POST",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceUploadDashurl"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "GetSignedUrlUploadLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "GetSignedUrlUploadLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayMethodGetDashurlGet": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "GET",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceGetDashurl"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "GetSignedUrlGetLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "GetSignedUrlGetLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayDeployment1758641492971": {
+              "Type": "AWS::ApiGateway::Deployment",
+              "Properties": {
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "StageName": "dev"
+              },
+              "DependsOn": [
+                "ApiGatewayMethodUploadDashurlPost",
+                "ApiGatewayMethodGetDashurlGet"
+              ]
+            },
+            "GetSignedUrlUploadLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "GetSignedUrlUploadLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "GetSignedUrlGetLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "GetSignedUrlGetLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "S3Bucket": {
+              "Type": "AWS::S3::Bucket",
+              "Properties": {
+                "BucketName": "s3-bucket-operations",
+                "PublicAccessBlockConfiguration": {
+                  "BlockPublicAcls": true,
+                  "BlockPublicPolicy": true,
+                  "IgnorePublicAcls": true,
+                  "RestrictPublicBuckets": true
+                }
+              }
+            }
+          },
+          "Outputs": {
+            "ServerlessDeploymentBucketName": {
+              "Value": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+              "Export": {
+                "Name": "sls-s3-signed-urls-dev-ServerlessDeploymentBucketName"
+              }
+            },
+            "GetSignedUrlUploadLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+              },
+              "Export": {
+                "Name": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
+              }
+            },
+            "GetSignedUrlGetLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+              },
+              "Export": {
+                "Name": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+              }
+            },
+            "ServiceEndpoint": {
+              "Description": "URL of the service endpoint",
+              "Value": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "https://",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    ".execute-api.",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ".",
+                    {
+                      "Ref": "AWS::URLSuffix"
+                    },
+                    "/dev"
+                  ]
+                ]
+              },
+              "Export": {
+                "Name": "sls-s3-signed-urls-dev-ServiceEndpoint"
+              }
+            }
+          }
+        },
+        "vpc": {}
+      },
+      "functions": {
+        "getSignedUrlUpload": {
+          "handler": "handler.getSignedUrlUpload",
+          "events": [
+            {
+              "http": {
+                "path": "upload-url",
+                "method": "post",
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "s3-signed-urls-dev-getSignedUrlUpload",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+        },
+        "getSignedUrlGet": {
+          "handler": "handler.getSignedUrlGet",
+          "events": [
+            {
+              "http": {
+                "path": "get-url",
+                "method": "get",
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "s3-signed-urls-dev-getSignedUrlGet",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+        }
+      },
+      "resources": {
+        "Resources": {
+          "S3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketName": "s3-bucket-operations",
+              "PublicAccessBlockConfiguration": {
+                "BlockPublicAcls": true,
+                "BlockPublicPolicy": true,
+                "IgnorePublicAcls": true,
+                "RestrictPublicBuckets": true
+              }
+            }
+          }
+        },
+        "Outputs": {}
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs18.x",
+      "region": "us-east-1",
+      "environment": {
+        "AWS_BUCKET_NAME": "s3-bucket-operations"
+      },
+      "iamRoleStatements": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:PutObject",
+            "s3:GetObject",
+            "s3:ListBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::s3-bucket-operations",
+            "arn:aws:s3:::s3-bucket-operations/*"
+          ]
+        }
+      ],
+      "stage": "dev",
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "GetSignedUrlUploadLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlUpload"
+            }
+          },
+          "GetSignedUrlGetLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlGet"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "s3-signed-urls",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "s3:PutObject",
+                          "s3:GetObject",
+                          "s3:ListBucket"
+                        ],
+                        "Resource": [
+                          "arn:aws:s3:::s3-bucket-operations",
+                          "arn:aws:s3:::s3-bucket-operations/*"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "s3-signed-urls",
+                    "dev",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetSignedUrlUploadLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+              },
+              "Handler": "handler.getSignedUrlUpload",
+              "Runtime": "nodejs18.x",
+              "FunctionName": "s3-signed-urls-dev-getSignedUrlUpload",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "AWS_BUCKET_NAME": "s3-bucket-operations"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetSignedUrlUploadLogGroup"
+            ]
+          },
+          "GetSignedUrlGetLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+              },
+              "Handler": "handler.getSignedUrlGet",
+              "Runtime": "nodejs18.x",
+              "FunctionName": "s3-signed-urls-dev-getSignedUrlGet",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "AWS_BUCKET_NAME": "s3-bucket-operations"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetSignedUrlGetLogGroup"
+            ]
+          },
+          "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetSignedUrlUploadLambdaFunction"
+              },
+              "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+            }
+          },
+          "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetSignedUrlGetLambdaFunction"
+              },
+              "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+            }
+          },
+          "ApiGatewayRestApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Properties": {
+              "Name": "dev-s3-signed-urls",
+              "EndpointConfiguration": {
+                "Types": [
+                  "EDGE"
+                ]
+              },
+              "Policy": ""
+            }
+          },
+          "ApiGatewayResourceUploadDashurl": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "upload-url",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceGetDashurl": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "get-url",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodUploadDashurlPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUploadDashurl"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetSignedUrlUploadLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetSignedUrlUploadLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodGetDashurlGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceGetDashurl"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetSignedUrlGetLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetSignedUrlGetLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1758641492971": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Properties": {
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "StageName": "dev"
+            },
+            "DependsOn": [
+              "ApiGatewayMethodUploadDashurlPost",
+              "ApiGatewayMethodGetDashurlGet"
+            ]
+          },
+          "GetSignedUrlUploadLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetSignedUrlUploadLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetSignedUrlGetLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetSignedUrlGetLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "S3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketName": "s3-bucket-operations",
+              "PublicAccessBlockConfiguration": {
+                "BlockPublicAcls": true,
+                "BlockPublicPolicy": true,
+                "IgnorePublicAcls": true,
+                "RestrictPublicBuckets": true
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+            "Export": {
+              "Name": "sls-s3-signed-urls-dev-ServerlessDeploymentBucketName"
+            }
+          },
+          "GetSignedUrlUploadLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+            },
+            "Export": {
+              "Name": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
+            }
+          },
+          "GetSignedUrlGetLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+            },
+            "Export": {
+              "Name": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+            }
+          },
+          "ServiceEndpoint": {
+            "Description": "URL of the service endpoint",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  },
+                  "/dev"
+                ]
+              ]
+            },
+            "Export": {
+              "Name": "sls-s3-signed-urls-dev-ServiceEndpoint"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "serviceRawFile": "service: s3-signed-urls\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: nodejs18.x\r\n  region: us-east-1\r\n\r\n  environment:\r\n    AWS_BUCKET_NAME: s3-bucket-operations \r\n    \r\n  iamRoleStatements:   # 👈 yahan S3 ke permissions dene honge\r\n    - Effect: Allow\r\n      Action:\r\n        - s3:PutObject\r\n        - s3:GetObject\r\n        - s3:ListBucket\r\n      Resource:\r\n        - arn:aws:s3:::s3-bucket-operations\r\n        - arn:aws:s3:::s3-bucket-operations/*\r\n  # apna bucket name daalna\r\n\r\nfunctions:\r\n  getSignedUrlUpload:\r\n    handler: handler.getSignedUrlUpload\r\n    events:\r\n      - http:\r\n          path: upload-url\r\n          method: post\r\n\r\n  getSignedUrlGet:\r\n    handler: handler.getSignedUrlGet\r\n    events:\r\n      - http:\r\n          path: get-url\r\n          method: get\r\nresources:\r\n  Resources:\r\n    S3Bucket:\r\n      Type: AWS::S3::Bucket\r\n      Properties:\r\n        BucketName: s3-bucket-operations\r\n        PublicAccessBlockConfiguration:\r\n          BlockPublicAcls: true\r\n          BlockPublicPolicy: true\r\n          IgnorePublicAcls: true\r\n          RestrictPublicBuckets: true",
+    "command": [
+      "deploy"
+    ],
+    "options": {},
+    "orgId": "ab7c7114-8ade-4fb9-a9ae-a4c4777356ff",
+    "orgName": "daniyal6622",
+    "userId": "jYQzPPYPSJ7xBg7BbT",
+    "userName": "daniyal6622",
+    "serviceProviderAwsAccountId": "211125495461",
+    "serviceProviderAwsCfStackName": "s3-signed-urls-dev",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:us-east-1:211125495461:stack/s3-signed-urls-dev/94e54930-9877-11f0-9324-0ef7f51bf4b9",
+    "serviceProviderAwsCfStackCreated": "2025-09-23T12:19:41.622Z",
+    "serviceProviderAwsCfStackUpdated": "2025-09-23T15:25:14.980Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "GetSignedUrlUploadLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-getSignedUrlUpload:12",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GetSignedUrlGetLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-getSignedUrlGet:12",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServiceEndpoint",
+        "OutputValue": "https://1ids1n99v3.execute-api.us-east-1.amazonaws.com/dev",
+        "Description": "URL of the service endpoint",
+        "ExportName": "sls-s3-signed-urls-dev-ServiceEndpoint"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+        "ExportName": "sls-s3-signed-urls-dev-ServerlessDeploymentBucketName"
+      }
+    ],
+    "compiledCloudFormationTemplate": {
+      "AWSTemplateFormatVersion": "2010-09-09",
+      "Description": "The AWS CloudFormation template for this Serverless application",
+      "Resources": {
+        "GetSignedUrlUploadLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlUpload"
+          }
+        },
+        "GetSignedUrlGetLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlGet"
+          }
+        },
+        "IamRoleLambdaExecution": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": [
+                      "lambda.amazonaws.com"
+                    ]
+                  },
+                  "Action": [
+                    "sts:AssumeRole"
+                  ]
+                }
+              ]
+            },
+            "Policies": [
+              {
+                "PolicyName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "s3-signed-urls",
+                      "dev",
+                      "lambda"
+                    ]
+                  ]
+                },
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:TagResource"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:PutLogEvents"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "s3:PutObject",
+                        "s3:GetObject",
+                        "s3:ListBucket"
+                      ],
+                      "Resource": [
+                        "arn:aws:s3:::s3-bucket-operations",
+                        "arn:aws:s3:::s3-bucket-operations/*"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "Path": "/",
+            "RoleName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "s3-signed-urls",
+                  "dev",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "lambdaRole"
+                ]
+              ]
+            }
+          }
+        },
+        "GetSignedUrlUploadLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+              "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+            },
+            "Handler": "handler.getSignedUrlUpload",
+            "Runtime": "nodejs18.x",
+            "FunctionName": "s3-signed-urls-dev-getSignedUrlUpload",
+            "MemorySize": 1024,
+            "Timeout": 6,
+            "Environment": {
+              "Variables": {
+                "AWS_BUCKET_NAME": "s3-bucket-operations"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "GetSignedUrlUploadLogGroup"
+          ]
+        },
+        "GetSignedUrlGetLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+              "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+            },
+            "Handler": "handler.getSignedUrlGet",
+            "Runtime": "nodejs18.x",
+            "FunctionName": "s3-signed-urls-dev-getSignedUrlGet",
+            "MemorySize": 1024,
+            "Timeout": 6,
+            "Environment": {
+              "Variables": {
+                "AWS_BUCKET_NAME": "s3-bucket-operations"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "GetSignedUrlGetLogGroup"
+          ]
+        },
+        "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "GetSignedUrlUploadLambdaFunction"
+            },
+            "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+          }
+        },
+        "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "GetSignedUrlGetLambdaFunction"
+            },
+            "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+          }
+        },
+        "ApiGatewayRestApi": {
+          "Type": "AWS::ApiGateway::RestApi",
+          "Properties": {
+            "Name": "dev-s3-signed-urls",
+            "EndpointConfiguration": {
+              "Types": [
+                "EDGE"
+              ]
+            },
+            "Policy": ""
+          }
+        },
+        "ApiGatewayResourceUploadDashurl": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "upload-url",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceGetDashurl": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "get-url",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayMethodUploadDashurlPost": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "POST",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceUploadDashurl"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "GetSignedUrlUploadLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "GetSignedUrlUploadLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayMethodGetDashurlGet": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "GET",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceGetDashurl"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "GetSignedUrlGetLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "GetSignedUrlGetLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayDeployment1758641492971": {
+          "Type": "AWS::ApiGateway::Deployment",
+          "Properties": {
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "StageName": "dev"
+          },
+          "DependsOn": [
+            "ApiGatewayMethodUploadDashurlPost",
+            "ApiGatewayMethodGetDashurlGet"
+          ]
+        },
+        "GetSignedUrlUploadLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "GetSignedUrlUploadLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "GetSignedUrlGetLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "GetSignedUrlGetLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
+            }
+          }
+        },
+        "S3Bucket": {
+          "Type": "AWS::S3::Bucket",
+          "Properties": {
+            "BucketName": "s3-bucket-operations",
+            "PublicAccessBlockConfiguration": {
+              "BlockPublicAcls": true,
+              "BlockPublicPolicy": true,
+              "IgnorePublicAcls": true,
+              "RestrictPublicBuckets": true
+            }
+          }
+        }
+      },
+      "Outputs": {
+        "ServerlessDeploymentBucketName": {
+          "Value": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+          "Export": {
+            "Name": "sls-s3-signed-urls-dev-ServerlessDeploymentBucketName"
+          }
+        },
+        "GetSignedUrlUploadLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+          },
+          "Export": {
+            "Name": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
+          }
+        },
+        "GetSignedUrlGetLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+          },
+          "Export": {
+            "Name": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+          }
+        },
+        "ServiceEndpoint": {
+          "Description": "URL of the service endpoint",
+          "Value": {
+            "Fn::Join": [
+              "",
+              [
+                "https://",
+                {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                ".execute-api.",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ".",
+                {
+                  "Ref": "AWS::URLSuffix"
+                },
+                "/dev"
+              ]
+            ]
+          },
+          "Export": {
+            "Name": "sls-s3-signed-urls-dev-ServiceEndpoint"
+          }
+        }
+      }
+    }
+  }
+}

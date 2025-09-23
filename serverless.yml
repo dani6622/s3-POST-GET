@@ -1,0 +1,46 @@
+service: s3-signed-urls
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+
+  environment:
+    AWS_BUCKET_NAME: s3-bucket-operations 
+    
+  iamRoleStatements:   # 👈 yahan S3 ke permissions dene honge
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+        - s3:ListBucket
+      Resource:
+        - arn:aws:s3:::s3-bucket-operations
+        - arn:aws:s3:::s3-bucket-operations/*
+  # apna bucket name daalna
+
+functions:
+  getSignedUrlUpload:
+    handler: handler.getSignedUrlUpload
+    events:
+      - http:
+          path: upload-url
+          method: post
+
+  getSignedUrlGet:
+    handler: handler.getSignedUrlGet
+    events:
+      - http:
+          path: get-url
+          method: get
+resources:
+  Resources:
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: s3-bucket-operations
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
