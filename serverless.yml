@@ -7,6 +7,7 @@ provider:
 
   environment:
     AWS_BUCKET_NAME: s3-bucket-operations 
+    METADATA_TABLE: s3-objects-metadata
     
   iamRoleStatements:   # 👈 yahan S3 ke permissions dene honge
     - Effect: Allow
@@ -14,9 +15,15 @@ provider:
         - s3:PutObject
         - s3:GetObject
         - s3:ListBucket
+        - s3:DeleteObject
+        - dynamodb:PutItem  
+        - dynamodb:DeleteItem
+
+        
       Resource:
         - arn:aws:s3:::s3-bucket-operations
         - arn:aws:s3:::s3-bucket-operations/*
+        - arn:aws:dynamodb:us-east-1:*:table/s3-objects-metadata
   # apna bucket name daalna
 
 functions:
@@ -33,14 +40,33 @@ functions:
       - http:
           path: get-url
           method: get
+
+  saves3metadata:
+    handler: handler.saveMetadata
+    events: 
+      - s3:
+          bucket: s3-bucket-operations
+          existing: true
+          event: s3:ObjectCreated:Put
+
+  deletes3object:               # 👈 New Lambda
+    handler: handler.deletes3object
+    events:
+      - http:
+          path: delete-file/{id+}
+          method: delete
+
 resources:
   Resources:
-    S3Bucket:
-      Type: AWS::S3::Bucket
+  
+    FilesMetaDataTable:
+      Type: AWS::DynamoDB::Table
       Properties:
-        BucketName: s3-bucket-operations
-        PublicAccessBlockConfiguration:
-          BlockPublicAcls: true
-          BlockPublicPolicy: true
-          IgnorePublicAcls: true
-          RestrictPublicBuckets: true
+        TableName: s3-objects-metadata
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH

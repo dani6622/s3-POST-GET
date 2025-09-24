@@ -10,7 +10,8 @@
         "runtime": "nodejs18.x",
         "region": "us-east-1",
         "environment": {
-          "AWS_BUCKET_NAME": "s3-bucket-operations"
+          "AWS_BUCKET_NAME": "s3-bucket-operations",
+          "METADATA_TABLE": "s3-objects-metadata"
         },
         "iamRoleStatements": [
           {
@@ -18,11 +19,15 @@
             "Action": [
               "s3:PutObject",
               "s3:GetObject",
-              "s3:ListBucket"
+              "s3:ListBucket",
+              "s3:DeleteObject",
+              "dynamodb:PutItem",
+              "dynamodb:DeleteItem"
             ],
             "Resource": [
               "arn:aws:s3:::s3-bucket-operations",
-              "arn:aws:s3:::s3-bucket-operations/*"
+              "arn:aws:s3:::s3-bucket-operations/*",
+              "arn:aws:dynamodb:us-east-1:*:table/s3-objects-metadata"
             ]
           }
         ],
@@ -42,6 +47,18 @@
               "Type": "AWS::Logs::LogGroup",
               "Properties": {
                 "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlGet"
+              }
+            },
+            "Saves3metadataLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/s3-signed-urls-dev-saves3metadata"
+              }
+            },
+            "Deletes3objectLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/s3-signed-urls-dev-deletes3object"
               }
             },
             "IamRoleLambdaExecution": {
@@ -107,11 +124,15 @@
                           "Action": [
                             "s3:PutObject",
                             "s3:GetObject",
-                            "s3:ListBucket"
+                            "s3:ListBucket",
+                            "s3:DeleteObject",
+                            "dynamodb:PutItem",
+                            "dynamodb:DeleteItem"
                           ],
                           "Resource": [
                             "arn:aws:s3:::s3-bucket-operations",
-                            "arn:aws:s3:::s3-bucket-operations/*"
+                            "arn:aws:s3:::s3-bucket-operations/*",
+                            "arn:aws:dynamodb:us-east-1:*:table/s3-objects-metadata"
                           ]
                         }
                       ]
@@ -139,7 +160,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
-                  "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+                  "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
                 },
                 "Handler": "handler.getSignedUrlUpload",
                 "Runtime": "nodejs18.x",
@@ -148,7 +169,8 @@
                 "Timeout": 6,
                 "Environment": {
                   "Variables": {
-                    "AWS_BUCKET_NAME": "s3-bucket-operations"
+                    "AWS_BUCKET_NAME": "s3-bucket-operations",
+                    "METADATA_TABLE": "s3-objects-metadata"
                   }
                 },
                 "Role": {
@@ -167,7 +189,7 @@
               "Properties": {
                 "Code": {
                   "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
-                  "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+                  "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
                 },
                 "Handler": "handler.getSignedUrlGet",
                 "Runtime": "nodejs18.x",
@@ -176,7 +198,8 @@
                 "Timeout": 6,
                 "Environment": {
                   "Variables": {
-                    "AWS_BUCKET_NAME": "s3-bucket-operations"
+                    "AWS_BUCKET_NAME": "s3-bucket-operations",
+                    "METADATA_TABLE": "s3-objects-metadata"
                   }
                 },
                 "Role": {
@@ -190,24 +213,264 @@
                 "GetSignedUrlGetLogGroup"
               ]
             },
-            "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA": {
+            "Saves3metadataLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                  "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
+                },
+                "Handler": "handler.saveMetadata",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "s3-signed-urls-dev-saves3metadata",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "AWS_BUCKET_NAME": "s3-bucket-operations",
+                    "METADATA_TABLE": "s3-objects-metadata"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "Saves3metadataLogGroup"
+              ]
+            },
+            "Deletes3objectLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                  "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
+                },
+                "Handler": "handler.deletes3object",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "s3-signed-urls-dev-deletes3object",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Environment": {
+                  "Variables": {
+                    "AWS_BUCKET_NAME": "s3-bucket-operations",
+                    "METADATA_TABLE": "s3-objects-metadata"
+                  }
+                },
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "Deletes3objectLogGroup"
+              ]
+            },
+            "GetSignedUrlUploadLambdaVersionrmOC0HmGA6JLHtbN6qB9BSECpU8CzgAairorXN3GbI": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "GetSignedUrlUploadLambdaFunction"
                 },
-                "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+                "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
               }
             },
-            "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A": {
+            "GetSignedUrlGetLambdaVersionrDSgyHiqpEaJBvrTmDTjVq934pbgziQZo9SOru9XF4": {
               "Type": "AWS::Lambda::Version",
               "DeletionPolicy": "Retain",
               "Properties": {
                 "FunctionName": {
                   "Ref": "GetSignedUrlGetLambdaFunction"
                 },
-                "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+                "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+              }
+            },
+            "Saves3metadataLambdaVersionOlfgTGFGyT8PwwpHo2tMiXMlrG2M3WZWoEbi5BhL8": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "Saves3metadataLambdaFunction"
+                },
+                "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+              }
+            },
+            "Deletes3objectLambdaVersionWyKSv2SLkIljnasJgetnb8iRj8xmF5Fi10kkLRz4Eaw": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "Deletes3objectLambdaFunction"
+                },
+                "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+              }
+            },
+            "Saves3metadataCustomS31": {
+              "Type": "Custom::S3",
+              "Version": "1.0",
+              "DependsOn": [
+                "Saves3metadataLambdaFunction",
+                "CustomDashresourceDashexistingDashs3LambdaFunction"
+              ],
+              "Properties": {
+                "ServiceToken": "<REDACTED>",
+                "FunctionName": "s3-signed-urls-dev-saves3metadata",
+                "BucketName": "s3-bucket-operations",
+                "BucketConfigs": [
+                  {
+                    "Event": "s3:ObjectCreated:Put",
+                    "Rules": []
+                  }
+                ]
+              }
+            },
+            "IamRoleCustomResourcesLambdaExecution": {
+              "Type": "AWS::IAM::Role",
+              "Properties": {
+                "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": [
+                          "lambda.amazonaws.com"
+                        ]
+                      },
+                      "Action": [
+                        "sts:AssumeRole"
+                      ]
+                    }
+                  ]
+                },
+                "Policies": [
+                  {
+                    "PolicyName": {
+                      "Fn::Join": [
+                        "-",
+                        [
+                          "dev",
+                          "s3-signed-urls",
+                          "custom-resources-lambda"
+                        ]
+                      ]
+                    },
+                    "PolicyDocument": {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:CreateLogStream",
+                            "logs:CreateLogGroup",
+                            "logs:TagResource"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:PutLogEvents"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Resource": {
+                            "Fn::Join": [
+                              ":",
+                              [
+                                "arn",
+                                {
+                                  "Ref": "AWS::Partition"
+                                },
+                                "s3",
+                                "",
+                                "",
+                                "s3-bucket-operations"
+                              ]
+                            ]
+                          },
+                          "Action": [
+                            "s3:PutBucketNotification",
+                            "s3:GetBucketNotification"
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Resource": {
+                            "Fn::Join": [
+                              ":",
+                              [
+                                "arn",
+                                {
+                                  "Ref": "AWS::Partition"
+                                },
+                                "lambda",
+                                {
+                                  "Ref": "AWS::Region"
+                                },
+                                {
+                                  "Ref": "AWS::AccountId"
+                                },
+                                "function",
+                                "*"
+                              ]
+                            ]
+                          },
+                          "Action": [
+                            "lambda:AddPermission",
+                            "lambda:RemovePermission"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "CustomDashresourceDashexistingDashs3LambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                  "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/custom-resources.zip"
+                },
+                "FunctionName": "s3-signed-urls-dev-custom-resource-existing-s3",
+                "Handler": "s3/handler.handler",
+                "MemorySize": 1024,
+                "Runtime": "nodejs20.x",
+                "Timeout": 180,
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleCustomResourcesLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "IamRoleCustomResourcesLambdaExecution",
+                "CustomDashresourceDashexistingDashs3LogGroup"
+              ]
+            },
+            "CustomDashresourceDashexistingDashs3LogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/s3-signed-urls-dev-custom-resource-existing-s3"
               }
             },
             "ApiGatewayRestApi": {
@@ -247,6 +510,33 @@
                   ]
                 },
                 "PathPart": "get-url",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceDeleteDashfile": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "delete-file",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceDeleteDashfileIdVar": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceDeleteDashfile"
+                },
+                "PathPart": "{id+}",
                 "RestApiId": {
                   "Ref": "ApiGatewayRestApi"
                 }
@@ -344,7 +634,53 @@
                 "GetSignedUrlGetLambdaPermissionApiGateway"
               ]
             },
-            "ApiGatewayDeployment1758641492971": {
+            "ApiGatewayMethodDeleteDashfileIdVarDelete": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "DELETE",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceDeleteDashfileIdVar"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "Deletes3objectLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "Deletes3objectLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayDeployment1758727402516": {
               "Type": "AWS::ApiGateway::Deployment",
               "Properties": {
                 "RestApiId": {
@@ -354,7 +690,8 @@
               },
               "DependsOn": [
                 "ApiGatewayMethodUploadDashurlPost",
-                "ApiGatewayMethodGetDashurlGet"
+                "ApiGatewayMethodGetDashurlGet",
+                "ApiGatewayMethodDeleteDashfileIdVarDelete"
               ]
             },
             "GetSignedUrlUploadLambdaPermissionApiGateway": {
@@ -431,16 +768,60 @@
                 }
               }
             },
-            "S3Bucket": {
-              "Type": "AWS::S3::Bucket",
+            "Deletes3objectLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
               "Properties": {
-                "BucketName": "s3-bucket-operations",
-                "PublicAccessBlockConfiguration": {
-                  "BlockPublicAcls": true,
-                  "BlockPublicPolicy": true,
-                  "IgnorePublicAcls": true,
-                  "RestrictPublicBuckets": true
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "Deletes3objectLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
                 }
+              }
+            },
+            "FilesMetaDataTable": {
+              "Type": "AWS::DynamoDB::Table",
+              "Properties": {
+                "TableName": "s3-objects-metadata",
+                "BillingMode": "PAY_PER_REQUEST",
+                "AttributeDefinitions": [
+                  {
+                    "AttributeName": "id",
+                    "AttributeType": "S"
+                  }
+                ],
+                "KeySchema": [
+                  {
+                    "AttributeName": "id",
+                    "KeyType": "HASH"
+                  }
+                ]
               }
             }
           },
@@ -454,7 +835,7 @@
             "GetSignedUrlUploadLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+                "Ref": "GetSignedUrlUploadLambdaVersionrmOC0HmGA6JLHtbN6qB9BSECpU8CzgAairorXN3GbI"
               },
               "Export": {
                 "Name": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
@@ -463,10 +844,28 @@
             "GetSignedUrlGetLambdaFunctionQualifiedArn": {
               "Description": "Current Lambda function version",
               "Value": {
-                "Ref": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+                "Ref": "GetSignedUrlGetLambdaVersionrDSgyHiqpEaJBvrTmDTjVq934pbgziQZo9SOru9XF4"
               },
               "Export": {
                 "Name": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+              }
+            },
+            "Saves3metadataLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "Saves3metadataLambdaVersionOlfgTGFGyT8PwwpHo2tMiXMlrG2M3WZWoEbi5BhL8"
+              },
+              "Export": {
+                "Name": "sls-s3-signed-urls-dev-Saves3metadataLambdaFunctionQualifiedArn"
+              }
+            },
+            "Deletes3objectLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "Deletes3objectLambdaVersionWyKSv2SLkIljnasJgetnb8iRj8xmF5Fi10kkLRz4Eaw"
+              },
+              "Export": {
+                "Name": "sls-s3-signed-urls-dev-Deletes3objectLambdaFunctionQualifiedArn"
               }
             },
             "ServiceEndpoint": {
@@ -517,7 +916,7 @@
           "timeout": 6,
           "runtime": "nodejs18.x",
           "vpc": {},
-          "versionLogicalId": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+          "versionLogicalId": "GetSignedUrlUploadLambdaVersionrmOC0HmGA6JLHtbN6qB9BSECpU8CzgAairorXN3GbI"
         },
         "getSignedUrlGet": {
           "handler": "handler.getSignedUrlGet",
@@ -536,21 +935,66 @@
           "timeout": 6,
           "runtime": "nodejs18.x",
           "vpc": {},
-          "versionLogicalId": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+          "versionLogicalId": "GetSignedUrlGetLambdaVersionrDSgyHiqpEaJBvrTmDTjVq934pbgziQZo9SOru9XF4"
+        },
+        "saves3metadata": {
+          "handler": "handler.saveMetadata",
+          "events": [
+            {
+              "s3": {
+                "bucket": "s3-bucket-operations",
+                "existing": true,
+                "event": "s3:ObjectCreated:Put"
+              }
+            }
+          ],
+          "name": "s3-signed-urls-dev-saves3metadata",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "Saves3metadataLambdaVersionOlfgTGFGyT8PwwpHo2tMiXMlrG2M3WZWoEbi5BhL8"
+        },
+        "deletes3object": {
+          "handler": "handler.deletes3object",
+          "events": [
+            {
+              "http": {
+                "path": "delete-file/{id+}",
+                "method": "delete",
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "s3-signed-urls-dev-deletes3object",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "Deletes3objectLambdaVersionWyKSv2SLkIljnasJgetnb8iRj8xmF5Fi10kkLRz4Eaw"
         }
       },
       "resources": {
         "Resources": {
-          "S3Bucket": {
-            "Type": "AWS::S3::Bucket",
+          "FilesMetaDataTable": {
+            "Type": "AWS::DynamoDB::Table",
             "Properties": {
-              "BucketName": "s3-bucket-operations",
-              "PublicAccessBlockConfiguration": {
-                "BlockPublicAcls": true,
-                "BlockPublicPolicy": true,
-                "IgnorePublicAcls": true,
-                "RestrictPublicBuckets": true
-              }
+              "TableName": "s3-objects-metadata",
+              "BillingMode": "PAY_PER_REQUEST",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "id",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "id",
+                  "KeyType": "HASH"
+                }
+              ]
             }
           }
         },
@@ -562,7 +1006,8 @@
       "runtime": "nodejs18.x",
       "region": "us-east-1",
       "environment": {
-        "AWS_BUCKET_NAME": "s3-bucket-operations"
+        "AWS_BUCKET_NAME": "s3-bucket-operations",
+        "METADATA_TABLE": "s3-objects-metadata"
       },
       "iamRoleStatements": [
         {
@@ -570,11 +1015,15 @@
           "Action": [
             "s3:PutObject",
             "s3:GetObject",
-            "s3:ListBucket"
+            "s3:ListBucket",
+            "s3:DeleteObject",
+            "dynamodb:PutItem",
+            "dynamodb:DeleteItem"
           ],
           "Resource": [
             "arn:aws:s3:::s3-bucket-operations",
-            "arn:aws:s3:::s3-bucket-operations/*"
+            "arn:aws:s3:::s3-bucket-operations/*",
+            "arn:aws:dynamodb:us-east-1:*:table/s3-objects-metadata"
           ]
         }
       ],
@@ -594,6 +1043,18 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlGet"
+            }
+          },
+          "Saves3metadataLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/s3-signed-urls-dev-saves3metadata"
+            }
+          },
+          "Deletes3objectLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/s3-signed-urls-dev-deletes3object"
             }
           },
           "IamRoleLambdaExecution": {
@@ -659,11 +1120,15 @@
                         "Action": [
                           "s3:PutObject",
                           "s3:GetObject",
-                          "s3:ListBucket"
+                          "s3:ListBucket",
+                          "s3:DeleteObject",
+                          "dynamodb:PutItem",
+                          "dynamodb:DeleteItem"
                         ],
                         "Resource": [
                           "arn:aws:s3:::s3-bucket-operations",
-                          "arn:aws:s3:::s3-bucket-operations/*"
+                          "arn:aws:s3:::s3-bucket-operations/*",
+                          "arn:aws:dynamodb:us-east-1:*:table/s3-objects-metadata"
                         ]
                       }
                     ]
@@ -691,7 +1156,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
-                "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+                "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
               },
               "Handler": "handler.getSignedUrlUpload",
               "Runtime": "nodejs18.x",
@@ -700,7 +1165,8 @@
               "Timeout": 6,
               "Environment": {
                 "Variables": {
-                  "AWS_BUCKET_NAME": "s3-bucket-operations"
+                  "AWS_BUCKET_NAME": "s3-bucket-operations",
+                  "METADATA_TABLE": "s3-objects-metadata"
                 }
               },
               "Role": {
@@ -719,7 +1185,7 @@
             "Properties": {
               "Code": {
                 "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
-                "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+                "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
               },
               "Handler": "handler.getSignedUrlGet",
               "Runtime": "nodejs18.x",
@@ -728,7 +1194,8 @@
               "Timeout": 6,
               "Environment": {
                 "Variables": {
-                  "AWS_BUCKET_NAME": "s3-bucket-operations"
+                  "AWS_BUCKET_NAME": "s3-bucket-operations",
+                  "METADATA_TABLE": "s3-objects-metadata"
                 }
               },
               "Role": {
@@ -742,24 +1209,264 @@
               "GetSignedUrlGetLogGroup"
             ]
           },
-          "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA": {
+          "Saves3metadataLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
+              },
+              "Handler": "handler.saveMetadata",
+              "Runtime": "nodejs18.x",
+              "FunctionName": "s3-signed-urls-dev-saves3metadata",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "AWS_BUCKET_NAME": "s3-bucket-operations",
+                  "METADATA_TABLE": "s3-objects-metadata"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "Saves3metadataLogGroup"
+            ]
+          },
+          "Deletes3objectLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
+              },
+              "Handler": "handler.deletes3object",
+              "Runtime": "nodejs18.x",
+              "FunctionName": "s3-signed-urls-dev-deletes3object",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "AWS_BUCKET_NAME": "s3-bucket-operations",
+                  "METADATA_TABLE": "s3-objects-metadata"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "Deletes3objectLogGroup"
+            ]
+          },
+          "GetSignedUrlUploadLambdaVersionrmOC0HmGA6JLHtbN6qB9BSECpU8CzgAairorXN3GbI": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetSignedUrlUploadLambdaFunction"
               },
-              "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+              "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
             }
           },
-          "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A": {
+          "GetSignedUrlGetLambdaVersionrDSgyHiqpEaJBvrTmDTjVq934pbgziQZo9SOru9XF4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetSignedUrlGetLambdaFunction"
               },
-              "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+              "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+            }
+          },
+          "Saves3metadataLambdaVersionOlfgTGFGyT8PwwpHo2tMiXMlrG2M3WZWoEbi5BhL8": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "Saves3metadataLambdaFunction"
+              },
+              "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+            }
+          },
+          "Deletes3objectLambdaVersionWyKSv2SLkIljnasJgetnb8iRj8xmF5Fi10kkLRz4Eaw": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "Deletes3objectLambdaFunction"
+              },
+              "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+            }
+          },
+          "Saves3metadataCustomS31": {
+            "Type": "Custom::S3",
+            "Version": "1.0",
+            "DependsOn": [
+              "Saves3metadataLambdaFunction",
+              "CustomDashresourceDashexistingDashs3LambdaFunction"
+            ],
+            "Properties": {
+              "ServiceToken": "<REDACTED>",
+              "FunctionName": "s3-signed-urls-dev-saves3metadata",
+              "BucketName": "s3-bucket-operations",
+              "BucketConfigs": [
+                {
+                  "Event": "s3:ObjectCreated:Put",
+                  "Rules": []
+                }
+              ]
+            }
+          },
+          "IamRoleCustomResourcesLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "s3-signed-urls",
+                        "custom-resources-lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "s3",
+                              "",
+                              "",
+                              "s3-bucket-operations"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "s3:PutBucketNotification",
+                          "s3:GetBucketNotification"
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "lambda",
+                              {
+                                "Ref": "AWS::Region"
+                              },
+                              {
+                                "Ref": "AWS::AccountId"
+                              },
+                              "function",
+                              "*"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "lambda:AddPermission",
+                          "lambda:RemovePermission"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "CustomDashresourceDashexistingDashs3LambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+                "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/custom-resources.zip"
+              },
+              "FunctionName": "s3-signed-urls-dev-custom-resource-existing-s3",
+              "Handler": "s3/handler.handler",
+              "MemorySize": 1024,
+              "Runtime": "nodejs20.x",
+              "Timeout": 180,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleCustomResourcesLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "IamRoleCustomResourcesLambdaExecution",
+              "CustomDashresourceDashexistingDashs3LogGroup"
+            ]
+          },
+          "CustomDashresourceDashexistingDashs3LogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/s3-signed-urls-dev-custom-resource-existing-s3"
             }
           },
           "ApiGatewayRestApi": {
@@ -799,6 +1506,33 @@
                 ]
               },
               "PathPart": "get-url",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceDeleteDashfile": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "delete-file",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceDeleteDashfileIdVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceDeleteDashfile"
+              },
+              "PathPart": "{id+}",
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -896,7 +1630,53 @@
               "GetSignedUrlGetLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1758641492971": {
+          "ApiGatewayMethodDeleteDashfileIdVarDelete": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "DELETE",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceDeleteDashfileIdVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": "<REDACTED>",
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "Deletes3objectLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "Deletes3objectLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1758727402516": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -906,7 +1686,8 @@
             },
             "DependsOn": [
               "ApiGatewayMethodUploadDashurlPost",
-              "ApiGatewayMethodGetDashurlGet"
+              "ApiGatewayMethodGetDashurlGet",
+              "ApiGatewayMethodDeleteDashfileIdVarDelete"
             ]
           },
           "GetSignedUrlUploadLambdaPermissionApiGateway": {
@@ -983,16 +1764,60 @@
               }
             }
           },
-          "S3Bucket": {
-            "Type": "AWS::S3::Bucket",
+          "Deletes3objectLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
             "Properties": {
-              "BucketName": "s3-bucket-operations",
-              "PublicAccessBlockConfiguration": {
-                "BlockPublicAcls": true,
-                "BlockPublicPolicy": true,
-                "IgnorePublicAcls": true,
-                "RestrictPublicBuckets": true
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "Deletes3objectLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
               }
+            }
+          },
+          "FilesMetaDataTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+              "TableName": "s3-objects-metadata",
+              "BillingMode": "PAY_PER_REQUEST",
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "id",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "id",
+                  "KeyType": "HASH"
+                }
+              ]
             }
           }
         },
@@ -1006,7 +1831,7 @@
           "GetSignedUrlUploadLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+              "Ref": "GetSignedUrlUploadLambdaVersionrmOC0HmGA6JLHtbN6qB9BSECpU8CzgAairorXN3GbI"
             },
             "Export": {
               "Name": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
@@ -1015,10 +1840,28 @@
           "GetSignedUrlGetLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+              "Ref": "GetSignedUrlGetLambdaVersionrDSgyHiqpEaJBvrTmDTjVq934pbgziQZo9SOru9XF4"
             },
             "Export": {
               "Name": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+            }
+          },
+          "Saves3metadataLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "Saves3metadataLambdaVersionOlfgTGFGyT8PwwpHo2tMiXMlrG2M3WZWoEbi5BhL8"
+            },
+            "Export": {
+              "Name": "sls-s3-signed-urls-dev-Saves3metadataLambdaFunctionQualifiedArn"
+            }
+          },
+          "Deletes3objectLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "Deletes3objectLambdaVersionWyKSv2SLkIljnasJgetnb8iRj8xmF5Fi10kkLRz4Eaw"
+            },
+            "Export": {
+              "Name": "sls-s3-signed-urls-dev-Deletes3objectLambdaFunctionQualifiedArn"
             }
           },
           "ServiceEndpoint": {
@@ -1060,7 +1903,7 @@
       "serviceProvider": null,
       "instanceParameters": null
     },
-    "serviceRawFile": "service: s3-signed-urls\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: nodejs18.x\r\n  region: us-east-1\r\n\r\n  environment:\r\n    AWS_BUCKET_NAME: s3-bucket-operations \r\n    \r\n  iamRoleStatements:   # 👈 yahan S3 ke permissions dene honge\r\n    - Effect: Allow\r\n      Action:\r\n        - s3:PutObject\r\n        - s3:GetObject\r\n        - s3:ListBucket\r\n      Resource:\r\n        - arn:aws:s3:::s3-bucket-operations\r\n        - arn:aws:s3:::s3-bucket-operations/*\r\n  # apna bucket name daalna\r\n\r\nfunctions:\r\n  getSignedUrlUpload:\r\n    handler: handler.getSignedUrlUpload\r\n    events:\r\n      - http:\r\n          path: upload-url\r\n          method: post\r\n\r\n  getSignedUrlGet:\r\n    handler: handler.getSignedUrlGet\r\n    events:\r\n      - http:\r\n          path: get-url\r\n          method: get\r\nresources:\r\n  Resources:\r\n    S3Bucket:\r\n      Type: AWS::S3::Bucket\r\n      Properties:\r\n        BucketName: s3-bucket-operations\r\n        PublicAccessBlockConfiguration:\r\n          BlockPublicAcls: true\r\n          BlockPublicPolicy: true\r\n          IgnorePublicAcls: true\r\n          RestrictPublicBuckets: true",
+    "serviceRawFile": "service: s3-signed-urls\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: nodejs18.x\r\n  region: us-east-1\r\n\r\n  environment:\r\n    AWS_BUCKET_NAME: s3-bucket-operations \r\n    METADATA_TABLE: s3-objects-metadata\r\n    \r\n  iamRoleStatements:   # 👈 yahan S3 ke permissions dene honge\r\n    - Effect: Allow\r\n      Action:\r\n        - s3:PutObject\r\n        - s3:GetObject\r\n        - s3:ListBucket\r\n        - s3:DeleteObject\r\n        - dynamodb:PutItem  \r\n        - dynamodb:DeleteItem\r\n\r\n        \r\n      Resource:\r\n        - arn:aws:s3:::s3-bucket-operations\r\n        - arn:aws:s3:::s3-bucket-operations/*\r\n        - arn:aws:dynamodb:us-east-1:*:table/s3-objects-metadata\r\n  # apna bucket name daalna\r\n\r\nfunctions:\r\n  getSignedUrlUpload:\r\n    handler: handler.getSignedUrlUpload\r\n    events:\r\n      - http:\r\n          path: upload-url\r\n          method: post\r\n\r\n  getSignedUrlGet:\r\n    handler: handler.getSignedUrlGet\r\n    events:\r\n      - http:\r\n          path: get-url\r\n          method: get\r\n\r\n  saves3metadata:\r\n    handler: handler.saveMetadata\r\n    events: \r\n      - s3:\r\n          bucket: s3-bucket-operations\r\n          existing: true\r\n          event: s3:ObjectCreated:Put\r\n\r\n  deletes3object:               # 👈 New Lambda\r\n    handler: handler.deletes3object\r\n    events:\r\n      - http:\r\n          path: delete-file/{id+}\r\n          method: delete\r\n\r\nresources:\r\n  Resources:\r\n  \r\n    FilesMetaDataTable:\r\n      Type: AWS::DynamoDB::Table\r\n      Properties:\r\n        TableName: s3-objects-metadata\r\n        BillingMode: PAY_PER_REQUEST\r\n        AttributeDefinitions:\r\n          - AttributeName: id\r\n            AttributeType: S\r\n        KeySchema:\r\n          - AttributeName: id\r\n            KeyType: HASH",
     "command": [
       "deploy"
     ],
@@ -1073,20 +1916,32 @@
     "serviceProviderAwsCfStackName": "s3-signed-urls-dev",
     "serviceProviderAwsCfStackId": "arn:aws:cloudformation:us-east-1:211125495461:stack/s3-signed-urls-dev/94e54930-9877-11f0-9324-0ef7f51bf4b9",
     "serviceProviderAwsCfStackCreated": "2025-09-23T12:19:41.622Z",
-    "serviceProviderAwsCfStackUpdated": "2025-09-23T15:25:14.980Z",
+    "serviceProviderAwsCfStackUpdated": "2025-09-24T15:16:13.028Z",
     "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
     "serviceProviderAwsCfStackOutputs": [
       {
         "OutputKey": "GetSignedUrlUploadLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-getSignedUrlUpload:12",
+        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-getSignedUrlUpload:22",
         "Description": "Current Lambda function version",
         "ExportName": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
       },
       {
+        "OutputKey": "Saves3metadataLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-saves3metadata:8",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-s3-signed-urls-dev-Saves3metadataLambdaFunctionQualifiedArn"
+      },
+      {
         "OutputKey": "GetSignedUrlGetLambdaFunctionQualifiedArn",
-        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-getSignedUrlGet:12",
+        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-getSignedUrlGet:22",
         "Description": "Current Lambda function version",
         "ExportName": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "Deletes3objectLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:us-east-1:211125495461:function:s3-signed-urls-dev-deletes3object:3",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-s3-signed-urls-dev-Deletes3objectLambdaFunctionQualifiedArn"
       },
       {
         "OutputKey": "ServiceEndpoint",
@@ -1114,6 +1969,18 @@
           "Type": "AWS::Logs::LogGroup",
           "Properties": {
             "LogGroupName": "/aws/lambda/s3-signed-urls-dev-getSignedUrlGet"
+          }
+        },
+        "Saves3metadataLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/s3-signed-urls-dev-saves3metadata"
+          }
+        },
+        "Deletes3objectLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/s3-signed-urls-dev-deletes3object"
           }
         },
         "IamRoleLambdaExecution": {
@@ -1179,11 +2046,15 @@
                       "Action": [
                         "s3:PutObject",
                         "s3:GetObject",
-                        "s3:ListBucket"
+                        "s3:ListBucket",
+                        "s3:DeleteObject",
+                        "dynamodb:PutItem",
+                        "dynamodb:DeleteItem"
                       ],
                       "Resource": [
                         "arn:aws:s3:::s3-bucket-operations",
-                        "arn:aws:s3:::s3-bucket-operations/*"
+                        "arn:aws:s3:::s3-bucket-operations/*",
+                        "arn:aws:dynamodb:us-east-1:*:table/s3-objects-metadata"
                       ]
                     }
                   ]
@@ -1211,7 +2082,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
-              "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+              "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
             },
             "Handler": "handler.getSignedUrlUpload",
             "Runtime": "nodejs18.x",
@@ -1220,7 +2091,8 @@
             "Timeout": 6,
             "Environment": {
               "Variables": {
-                "AWS_BUCKET_NAME": "s3-bucket-operations"
+                "AWS_BUCKET_NAME": "s3-bucket-operations",
+                "METADATA_TABLE": "s3-objects-metadata"
               }
             },
             "Role": {
@@ -1239,7 +2111,7 @@
           "Properties": {
             "Code": {
               "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
-              "S3Key": "serverless/s3-signed-urls/dev/1758641515720-2025-09-23T15:31:55.720Z/s3-signed-urls.zip"
+              "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
             },
             "Handler": "handler.getSignedUrlGet",
             "Runtime": "nodejs18.x",
@@ -1248,7 +2120,8 @@
             "Timeout": 6,
             "Environment": {
               "Variables": {
-                "AWS_BUCKET_NAME": "s3-bucket-operations"
+                "AWS_BUCKET_NAME": "s3-bucket-operations",
+                "METADATA_TABLE": "s3-objects-metadata"
               }
             },
             "Role": {
@@ -1262,24 +2135,264 @@
             "GetSignedUrlGetLogGroup"
           ]
         },
-        "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA": {
+        "Saves3metadataLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+              "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
+            },
+            "Handler": "handler.saveMetadata",
+            "Runtime": "nodejs18.x",
+            "FunctionName": "s3-signed-urls-dev-saves3metadata",
+            "MemorySize": 1024,
+            "Timeout": 6,
+            "Environment": {
+              "Variables": {
+                "AWS_BUCKET_NAME": "s3-bucket-operations",
+                "METADATA_TABLE": "s3-objects-metadata"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "Saves3metadataLogGroup"
+          ]
+        },
+        "Deletes3objectLambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+              "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/s3-signed-urls.zip"
+            },
+            "Handler": "handler.deletes3object",
+            "Runtime": "nodejs18.x",
+            "FunctionName": "s3-signed-urls-dev-deletes3object",
+            "MemorySize": 1024,
+            "Timeout": 6,
+            "Environment": {
+              "Variables": {
+                "AWS_BUCKET_NAME": "s3-bucket-operations",
+                "METADATA_TABLE": "s3-objects-metadata"
+              }
+            },
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "Deletes3objectLogGroup"
+          ]
+        },
+        "GetSignedUrlUploadLambdaVersionrmOC0HmGA6JLHtbN6qB9BSECpU8CzgAairorXN3GbI": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "GetSignedUrlUploadLambdaFunction"
             },
-            "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+            "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
           }
         },
-        "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A": {
+        "GetSignedUrlGetLambdaVersionrDSgyHiqpEaJBvrTmDTjVq934pbgziQZo9SOru9XF4": {
           "Type": "AWS::Lambda::Version",
           "DeletionPolicy": "Retain",
           "Properties": {
             "FunctionName": {
               "Ref": "GetSignedUrlGetLambdaFunction"
             },
-            "CodeSha256": "KTqlvUN3y2EPSFXtZFzl1S0bAaBla1MDdzWAsPnoWHs="
+            "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+          }
+        },
+        "Saves3metadataLambdaVersionOlfgTGFGyT8PwwpHo2tMiXMlrG2M3WZWoEbi5BhL8": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "Saves3metadataLambdaFunction"
+            },
+            "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+          }
+        },
+        "Deletes3objectLambdaVersionWyKSv2SLkIljnasJgetnb8iRj8xmF5Fi10kkLRz4Eaw": {
+          "Type": "AWS::Lambda::Version",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "FunctionName": {
+              "Ref": "Deletes3objectLambdaFunction"
+            },
+            "CodeSha256": "yhOSA691ptBeLyTnjfFSykSWE+SSQahWHjn4EdQvj0Y="
+          }
+        },
+        "Saves3metadataCustomS31": {
+          "Type": "Custom::S3",
+          "Version": "1.0",
+          "DependsOn": [
+            "Saves3metadataLambdaFunction",
+            "CustomDashresourceDashexistingDashs3LambdaFunction"
+          ],
+          "Properties": {
+            "ServiceToken": "<REDACTED>",
+            "FunctionName": "s3-signed-urls-dev-saves3metadata",
+            "BucketName": "s3-bucket-operations",
+            "BucketConfigs": [
+              {
+                "Event": "s3:ObjectCreated:Put",
+                "Rules": []
+              }
+            ]
+          }
+        },
+        "IamRoleCustomResourcesLambdaExecution": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+            "AssumeRolePolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": [
+                      "lambda.amazonaws.com"
+                    ]
+                  },
+                  "Action": [
+                    "sts:AssumeRole"
+                  ]
+                }
+              ]
+            },
+            "Policies": [
+              {
+                "PolicyName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "dev",
+                      "s3-signed-urls",
+                      "custom-resources-lambda"
+                    ]
+                  ]
+                },
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:TagResource"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "logs:PutLogEvents"
+                      ],
+                      "Resource": [
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s3-signed-urls-dev*:*:*"
+                        }
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Resource": {
+                        "Fn::Join": [
+                          ":",
+                          [
+                            "arn",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            "s3",
+                            "",
+                            "",
+                            "s3-bucket-operations"
+                          ]
+                        ]
+                      },
+                      "Action": [
+                        "s3:PutBucketNotification",
+                        "s3:GetBucketNotification"
+                      ]
+                    },
+                    {
+                      "Effect": "Allow",
+                      "Resource": {
+                        "Fn::Join": [
+                          ":",
+                          [
+                            "arn",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            "lambda",
+                            {
+                              "Ref": "AWS::Region"
+                            },
+                            {
+                              "Ref": "AWS::AccountId"
+                            },
+                            "function",
+                            "*"
+                          ]
+                        ]
+                      },
+                      "Action": [
+                        "lambda:AddPermission",
+                        "lambda:RemovePermission"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "CustomDashresourceDashexistingDashs3LambdaFunction": {
+          "Type": "AWS::Lambda::Function",
+          "Properties": {
+            "Code": {
+              "S3Bucket": "serverless-framework-deployments-us-east-1-7622eca5-bbf7",
+              "S3Key": "serverless/s3-signed-urls/dev/1758727428355-2025-09-24T15:23:48.355Z/custom-resources.zip"
+            },
+            "FunctionName": "s3-signed-urls-dev-custom-resource-existing-s3",
+            "Handler": "s3/handler.handler",
+            "MemorySize": 1024,
+            "Runtime": "nodejs20.x",
+            "Timeout": 180,
+            "Role": {
+              "Fn::GetAtt": [
+                "IamRoleCustomResourcesLambdaExecution",
+                "Arn"
+              ]
+            }
+          },
+          "DependsOn": [
+            "IamRoleCustomResourcesLambdaExecution",
+            "CustomDashresourceDashexistingDashs3LogGroup"
+          ]
+        },
+        "CustomDashresourceDashexistingDashs3LogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+            "LogGroupName": "/aws/lambda/s3-signed-urls-dev-custom-resource-existing-s3"
           }
         },
         "ApiGatewayRestApi": {
@@ -1319,6 +2432,33 @@
               ]
             },
             "PathPart": "get-url",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceDeleteDashfile": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Fn::GetAtt": [
+                "ApiGatewayRestApi",
+                "RootResourceId"
+              ]
+            },
+            "PathPart": "delete-file",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            }
+          }
+        },
+        "ApiGatewayResourceDeleteDashfileIdVar": {
+          "Type": "AWS::ApiGateway::Resource",
+          "Properties": {
+            "ParentId": {
+              "Ref": "ApiGatewayResourceDeleteDashfile"
+            },
+            "PathPart": "{id+}",
             "RestApiId": {
               "Ref": "ApiGatewayRestApi"
             }
@@ -1416,7 +2556,53 @@
             "GetSignedUrlGetLambdaPermissionApiGateway"
           ]
         },
-        "ApiGatewayDeployment1758641492971": {
+        "ApiGatewayMethodDeleteDashfileIdVarDelete": {
+          "Type": "AWS::ApiGateway::Method",
+          "Properties": {
+            "HttpMethod": "DELETE",
+            "RequestParameters": {},
+            "ResourceId": {
+              "Ref": "ApiGatewayResourceDeleteDashfileIdVar"
+            },
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ApiKeyRequired": "<REDACTED>",
+            "AuthorizationType": "NONE",
+            "Integration": {
+              "IntegrationHttpMethod": "POST",
+              "Type": "AWS_PROXY",
+              "Uri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "Deletes3objectLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              }
+            },
+            "MethodResponses": []
+          },
+          "DependsOn": [
+            "Deletes3objectLambdaPermissionApiGateway"
+          ]
+        },
+        "ApiGatewayDeployment1758727402516": {
           "Type": "AWS::ApiGateway::Deployment",
           "Properties": {
             "RestApiId": {
@@ -1426,7 +2612,8 @@
           },
           "DependsOn": [
             "ApiGatewayMethodUploadDashurlPost",
-            "ApiGatewayMethodGetDashurlGet"
+            "ApiGatewayMethodGetDashurlGet",
+            "ApiGatewayMethodDeleteDashfileIdVarDelete"
           ]
         },
         "GetSignedUrlUploadLambdaPermissionApiGateway": {
@@ -1503,16 +2690,60 @@
             }
           }
         },
-        "S3Bucket": {
-          "Type": "AWS::S3::Bucket",
+        "Deletes3objectLambdaPermissionApiGateway": {
+          "Type": "AWS::Lambda::Permission",
           "Properties": {
-            "BucketName": "s3-bucket-operations",
-            "PublicAccessBlockConfiguration": {
-              "BlockPublicAcls": true,
-              "BlockPublicPolicy": true,
-              "IgnorePublicAcls": true,
-              "RestrictPublicBuckets": true
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "Deletes3objectLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "apigateway.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                  ":execute-api:",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  "/*/*"
+                ]
+              ]
             }
+          }
+        },
+        "FilesMetaDataTable": {
+          "Type": "AWS::DynamoDB::Table",
+          "Properties": {
+            "TableName": "s3-objects-metadata",
+            "BillingMode": "PAY_PER_REQUEST",
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "id",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "id",
+                "KeyType": "HASH"
+              }
+            ]
           }
         }
       },
@@ -1526,7 +2757,7 @@
         "GetSignedUrlUploadLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "GetSignedUrlUploadLambdaVersion9zECrf7rXncrmsqXOelg4xpYgrA3n6j2UOAfEEylA"
+            "Ref": "GetSignedUrlUploadLambdaVersionrmOC0HmGA6JLHtbN6qB9BSECpU8CzgAairorXN3GbI"
           },
           "Export": {
             "Name": "sls-s3-signed-urls-dev-GetSignedUrlUploadLambdaFunctionQualifiedArn"
@@ -1535,10 +2766,28 @@
         "GetSignedUrlGetLambdaFunctionQualifiedArn": {
           "Description": "Current Lambda function version",
           "Value": {
-            "Ref": "GetSignedUrlGetLambdaVersion3Y6fZpkP3JRxsJH0cPNIT3F1whPCGnq4hCwmwTd22A"
+            "Ref": "GetSignedUrlGetLambdaVersionrDSgyHiqpEaJBvrTmDTjVq934pbgziQZo9SOru9XF4"
           },
           "Export": {
             "Name": "sls-s3-signed-urls-dev-GetSignedUrlGetLambdaFunctionQualifiedArn"
+          }
+        },
+        "Saves3metadataLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "Saves3metadataLambdaVersionOlfgTGFGyT8PwwpHo2tMiXMlrG2M3WZWoEbi5BhL8"
+          },
+          "Export": {
+            "Name": "sls-s3-signed-urls-dev-Saves3metadataLambdaFunctionQualifiedArn"
+          }
+        },
+        "Deletes3objectLambdaFunctionQualifiedArn": {
+          "Description": "Current Lambda function version",
+          "Value": {
+            "Ref": "Deletes3objectLambdaVersionWyKSv2SLkIljnasJgetnb8iRj8xmF5Fi10kkLRz4Eaw"
+          },
+          "Export": {
+            "Name": "sls-s3-signed-urls-dev-Deletes3objectLambdaFunctionQualifiedArn"
           }
         },
         "ServiceEndpoint": {
